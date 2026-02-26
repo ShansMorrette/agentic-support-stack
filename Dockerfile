@@ -4,9 +4,7 @@ FROM python:3.12-slim
 # Variables de entorno
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    APP_HOME=/app \
-    VIRTUAL_ENV=/app/.venv \
-    PATH="/app/.venv/bin:$PATH"
+    APP_HOME=/app
 
 # Crear directorio de trabajo
 WORKDIR $APP_HOME
