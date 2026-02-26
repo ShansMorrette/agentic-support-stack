@@ -35,23 +35,23 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 # Levantar backend en background
-echo "📡 Levantando Backend FastAPI en http://localhost:8000..."
-uv run uvicorn backend.app.main:app --reload --port 8000 &
+echo "📡 Levantando Backend FastAPI en http://localhost:8001..."
+uv run uvicorn backend.app.main:app --reload --port 8001 &
 BACKEND_PID=$!
 
 # Esperar un poco para que el backend inicie
 sleep 2
 
 # Levantar frontend en background
-echo "🎨 Levantando Frontend Streamlit en http://localhost:8501..."
-uv run streamlit run frontend/app/main.py --server.port 8501 &
+echo "🎨 Levantando Frontend Streamlit en http://localhost:8502..."
+uv run streamlit run frontend/app/main.py --server.port 8502 &
 FRONTEND_PID=$!
 
 echo ""
 echo "✅ Servicios iniciados:"
-echo "   - Backend:  http://localhost:8000"
-echo "   - API Docs: http://localhost:8000/docs"
-echo "   - Frontend: http://localhost:8501"
+echo "   - Backend:  http://localhost:8001"
+echo "   - API Docs: http://localhost:8001/docs"
+echo "   - Frontend: http://localhost:8502"
 echo ""
 echo "Presiona Ctrl+C para detener todos los servicios"
 
