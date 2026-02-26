@@ -74,7 +74,7 @@ class Settings(BaseSettings):
 
     # --- API Keys ---
     GEMINI_API_KEY: str = Field(..., description="API Key de Gemini")
-    GEMINI_MODEL: str = Field(default="gemini-2.5-flash")
+    GEMINI_MODEL: str = Field(default="google/gemini-flash-1.5")
 
     # --- Redis ---
     REDIS_HOST: str = Field(default="redis")
