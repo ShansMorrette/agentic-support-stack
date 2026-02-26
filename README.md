@@ -8,20 +8,21 @@
 ## 🚀 Comenzar en 60 Segundos
 
 ```bash
-# 1. Clonar y configurar
+# 1. Clonar el repositorio
 git clone https://github.com/ShansMorrette/agentic-support-stack.git
-cd project_saas
+cd agentic-support-stack
+
+# 2. Configurar variables de entorno
 cp .env.example .env
+# Edita el archivo .env y agrega tu GEMINI_API_KEY
+# Obtener en: https://aistudio.google.com/
 
-# 2. Configurar API Key (obtener en: https://aistudio.google.com/)
-echo "GEMINI_API_KEY=tu_api_key_aqui" >> .env
-
-# 3. Ejecutar
-docker compose up -d
+# 3. Levantar la infraestructura con Docker
+docker compose up -d --build
 
 # 4. ¡Listo!
-# 🌐 App: http://localhost:8502
-# 📚 API Docs: http://localhost:8001/docs
+# 🌐 Dashboard (Streamlit): http://localhost:8502
+# 📚 API Docs (FastAPI): http://localhost:8001/docs
 ```
 
 ## ✨ ¿Qué Puede Hacer?
@@ -36,21 +37,21 @@ docker compose up -d
 ### 🤖 Atención Inteligente (WebLanMasters)
 
 - **🧠 Clasificación Automática** - Gemini clasifica mensajes en *Ventas*, *Soporte* o *General*.
-- **� Gestión de Tickets** - Generación automática de tickets con prioridad y resumen.
+- **🎫 Gestión de Tickets** - Generación automática de tickets con prioridad y resumen.
 - **👤 Perfiles de Clientes** - Identificación y registro automático de nuevos prospectos.
 - **💬 Historial Centralizado** - Almacenamiento de conversaciones para seguimiento.
 
-### � Dashboard Interactivo
+### 📈 Dashboard Interactivo
 
-- **� Métricas en tiempo real** - Estadísticas de uso y calidad de código.
+- **📊 Métricas en tiempo real** - Estadísticas de uso y calidad de código.
 - **🚀 Panel de Atención** - Vista dual de "Prospectos (Ventas)" y "Soporte (Tickets)".
 - **🏆 Sistema de logros** - Gamificación para desarrolladores.
-- **� Exportar datos** - CSV/JSON para análisis externo.
+- **📥 Exportar datos** - CSV/JSON para análisis externo.
 
 ## 🏗️ Arquitectura
 
 ```text
-project_saas/
+agentic-support-stack/
 ├── backend/app/          # FastAPI + PostgreSQL
 │   ├── core/            # Configuración y seguridad
 │   ├── domain/          # Modelos de datos (User, Analysis, Client, Ticket, Conversation)
@@ -95,7 +96,7 @@ response = requests.post(url, json=data, headers=headers)
 ### 2. Chat de Atención
 
 ```python
-url = "http://localhost:8001/api/chat/atencion"
+url = f"http://localhost:8001/api/chat/atencion"
 headers = {"Authorization": "Bearer tu_jwt_token"}
 data = {"text": "Hola, necesito soporte con mi servidor"}
 response = requests.post(url, json=data, headers=headers)
