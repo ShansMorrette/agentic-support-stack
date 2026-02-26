@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 import logging
 from typing import Dict, Any, Optional
-import openai
+from openai import AsyncOpenAI
 
 from app.core.config import settings
 
@@ -30,7 +30,7 @@ class GeminiClient:
     def __init__(self, api_key: Optional[str] = None):
         api_key = api_key or getattr(settings, 'GEMINI_API_KEY', '')
         # Base client configuration for OpenRouter
-        self.client = openai.AsyncOpenAI(
+        self.client = AsyncOpenAI(
             api_key=api_key,
             base_url=OPENROUTER_BASE_URL,
             default_headers={
