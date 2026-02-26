@@ -126,4 +126,3 @@ response = requests.post(url, json=data, headers=headers)
 
 ---
 📄 **Licencia:** MIT License - Neural Code Analyzer & Smart Attention System  
-¿Preguntas? ✉️ <gompatri@gmail.com>
