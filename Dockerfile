@@ -17,18 +17,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar UV usando pip
-RUN pip install --no-cache-dir uv
+# Instalar dependencias usando pip
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar código de la aplicación
 COPY . .
 
 # Dar permisos a los scripts
 RUN chmod +x scripts/*.sh
-
-# Crear venv e instalar dependencias con UV
-# uv sync crea el venv automáticamente y usa pyproject.toml + uv.lock
-RUN uv sync --frozen
 
 # Exponer puertos (FastAPI: 8001, Streamlit: 8502)
 EXPOSE 8001 8502
