@@ -9,7 +9,7 @@
 
 ```bash
 # 1. Clonar y configurar
-git clone https://github.com/Ponce1969/sas_con_agentes.git
+git clone https://github.com/ShansMorrette/agentic-support-stack.git
 cd project_saas
 cp .env.example .env
 
