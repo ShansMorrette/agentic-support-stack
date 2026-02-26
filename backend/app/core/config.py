@@ -98,7 +98,7 @@ class Settings(BaseSettings):
 
     # --- CORS ---
     ALLOWED_ORIGINS: str = Field(
-        default="http://localhost:8501,http://localhost:8502,http://localhost:3000",
+        default="http://127.0.0.1:8502,http://0.0.0.0:8502,http://localhost:8502,http://localhost:3000",
         description="Orígenes permitidos para CORS (separados por coma)",
     )
     

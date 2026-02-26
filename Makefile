@@ -18,11 +18,11 @@ dev: ## Levantar en modo desarrollo (backend + frontend)
 
 backend: ## Levantar solo backend
 	@echo "📡 Levantando backend..."
-	uv run uvicorn backend.app.main:app --reload --port 8000
+	uv run uvicorn backend.app.main:app --reload --port 8001
 
 frontend: ## Levantar solo frontend
 	@echo "🎨 Levantando frontend..."
-	uv run streamlit run frontend/app/main.py --server.port 8501
+	uv run streamlit run frontend/app/main.py --server.port 8502
 
 docker-build: ## Construir imagen Docker
 	@echo "🐳 Construyendo imagen Docker..."

@@ -67,10 +67,10 @@ if [ "$all_available" = true ]; then
     echo "  docker-compose up --build"
     echo ""
     echo "Acceso:"
-    echo "  Frontend: http://localhost:$FRONTEND_PORT_HOST"
-    echo "  Backend API: http://localhost:$BACKEND_PORT_HOST/docs"
-    echo "  PostgreSQL: localhost:$POSTGRES_PORT_HOST"
-    echo "  Redis: localhost:$REDIS_PORT_HOST"
+    echo "  Frontend: http://127.0.0.1:$FRONTEND_PORT_HOST"
+    echo "  Backend API: http://127.0.0.1:$BACKEND_PORT_HOST/docs"
+    echo "  PostgreSQL: 127.0.0.1:$POSTGRES_PORT_HOST"
+    echo "  Redis: 127.0.0.1:$REDIS_PORT_HOST"
     exit 0
 else
     echo -e "${RED}❌ Algunos puertos están en uso${NC}"

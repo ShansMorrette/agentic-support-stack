@@ -30,8 +30,8 @@ RUN chmod +x scripts/*.sh
 # uv sync crea el venv automáticamente y usa pyproject.toml + uv.lock
 RUN uv sync --frozen
 
-# Exponer puertos (FastAPI: 8000, Streamlit: 8501)
-EXPOSE 8000 8501
+# Exponer puertos (FastAPI: 8001, Streamlit: 8502)
+EXPOSE 8001 8502
 
 # Comando por defecto
 CMD ["/bin/bash", "./scripts/start.sh"]

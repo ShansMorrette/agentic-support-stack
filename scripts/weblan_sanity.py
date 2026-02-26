@@ -15,7 +15,7 @@ import json
 import time
 import requests
 
-BASE = os.getenv("WEBSANC_BASE", "http://localhost:8000")
+BASE = os.getenv("WEBSANC_BASE", "http://127.0.0.1:8001")
 EMAIL = os.getenv("WSANITY_EMAIL", "qa_weblan@example.com")
 PASSWORD = os.getenv("WSANITY_PASSWORD", "Test1234!")
 

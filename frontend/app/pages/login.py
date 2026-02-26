@@ -8,7 +8,7 @@ import requests
 import streamlit as st
 
 # Configuración
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8001")
 
 st.set_page_config(page_title="Login - Neural Code Analyzer", page_icon="🔐", layout="centered")
 
