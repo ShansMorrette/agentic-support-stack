@@ -1,0 +1,67 @@
+
+services:
+  # PostgreSQL con pgvector
+  db:
+    image: ankane/pgvector:latest
+    container_name: neural_postgres_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT_HOST}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - saas_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis para Celery
+  redis:
+    image: redis:7-alpine
+    container_name: neural_redis_cache
+    ports:
+      - "${REDIS_PORT_HOST}:6379"
+    networks:
+      - saas_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Aplicación Unificada (Backend FastAPI + Frontend Streamlit)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: neural_saas_app
+    env_file:
+      - .env
+    ports:
+      - "${BACKEND_PORT_HOST}:${FASTAPI_PORT}"
+      - "${FRONTEND_PORT_HOST}:${STREAMLIT_PORT}"
+    volumes:
+      - .:/app:cached
+      - /app/.venv  # Excluir venv del volumen montado
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - saas_network
+    restart: unless-stopped
+
+networks:
+  saas_network:
+    driver: bridge
+
+volumes:
+  pgdata:
