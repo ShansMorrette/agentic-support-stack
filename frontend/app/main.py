@@ -88,29 +88,31 @@ def main():
         
         with col_left:
             st.subheader("🚀 Últimos Prospectos")
-            if prospects:
-                df_p = pd.DataFrame(prospects)
-            if 'created_at' in df_p.columns:
-                df_p['created_at'] = pd.to_datetime(df_p['created_at']).dt.tz_convert('America/Caracas')
+            df_p = pd.DataFrame(prospects)
+            if not df_p.empty:
+                if 'created_at' in df_p.columns:
+                    df_p['created_at'] = pd.to_datetime(df_p['created_at']).dt.tz_convert('America/Caracas')
                 st.dataframe(df_p, use_container_width=True, hide_index=True)
             else:
                 st.write("No hay prospectos registrados.")
 
         with col_right:
             st.subheader("🛠️ Tickets de Soporte Pendientes")
-            if tickets:
-                df_t = pd.DataFrame(tickets)
+            df_t = pd.DataFrame(tickets)
+            if not df_t.empty:
                 # Map priority to emojis
                 if 'priority' in df_t.columns:
                     df_t['priority'] = df_t['priority'].apply(lambda x: '🔴 Alta' if x >= 4 else '🟡 Media' if x == 3 else '🟢 Baja')
+                if 'created_at' in df_t.columns:
+                    df_t['created_at'] = pd.to_datetime(df_t['created_at']).dt.tz_convert('America/Caracas')
                 st.dataframe(df_t, use_container_width=True, hide_index=True)
             else:
                 st.write("No hay tickets pendientes.")
 
     elif menu == "🚀 Ventas / Prospects":
         st.subheader("Gestión de Prospectos de Ventas")
-        if prospects:
-            df_p = pd.DataFrame(prospects)
+        df_p = pd.DataFrame(prospects)
+        if not df_p.empty:
             if 'created_at' in df_p.columns:
                 df_p['created_at'] = pd.to_datetime(df_p['created_at']).dt.tz_convert('America/Caracas')
             st.table(df_p)
@@ -119,8 +121,8 @@ def main():
 
     elif menu == "🛠️ Soporte / Tickets":
         st.subheader("Gestión de Tickets de Soporte")
-        if tickets:
-            df_t = pd.DataFrame(tickets)
+        df_t = pd.DataFrame(tickets)
+        if not df_t.empty:
             if 'created_at' in df_t.columns:
                 df_t['created_at'] = pd.to_datetime(df_t['created_at']).dt.tz_convert('America/Caracas')
             st.table(df_t)
