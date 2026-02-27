@@ -24,7 +24,7 @@ def main():
         initial_sidebar_state="expanded"
     )
 
-    # Custom CSS for high-end look
+    # Custom CSS for high-end look and table expansion
     st.markdown("""
         <style>
         .metric-card {
@@ -36,6 +36,10 @@ def main():
         }
         .stButton>button {
             border-radius: 20px;
+        }
+        /* Eliminar scroll vertical interno en dataframes de streamlit */
+        .stDataFrame div[data-testid="stTable"] {
+            overflow: visible !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -52,6 +56,12 @@ def main():
             ["📊 Dashboard General", "🚀 Ventas / Prospects", "🛠️ Soporte / Tickets"],
             index=0
         )
+        
+        st.markdown("---")
+        st.markdown("### 🔍 Filtros Rápidos")
+        f_priority = st.selectbox("Prioridad", ["Todas", "🔴 Alta", "🟡 Media", "🟢 Baja"])
+        f_category = st.selectbox("Categoría", ["Todas", "Soporte Técnico", "Ventas", "Facturación", "Otros"])
+        f_status = st.selectbox("Estado", ["Todos", "Abierto", "Pendiente", "Cerrado"])
         
         st.markdown("---")
         st.info(f"🌐 Server: {BACKEND_URL}")
@@ -92,7 +102,12 @@ def main():
             if not df_p.empty:
                 if 'created_at' in df_p.columns:
                     df_p['created_at'] = pd.to_datetime(df_p['created_at']).dt.tz_convert('America/Caracas')
-                st.dataframe(df_p, use_container_width=True, hide_index=True)
+                st.dataframe(
+                    df_p, 
+                    use_container_width=True, 
+                    hide_index=True,
+                    height=500
+                )
             else:
                 st.write("No hay prospectos registrados.")
 
@@ -105,7 +120,12 @@ def main():
                     df_t['priority'] = df_t['priority'].apply(lambda x: '🔴 Alta' if x >= 4 else '🟡 Media' if x == 3 else '🟢 Baja')
                 if 'created_at' in df_t.columns:
                     df_t['created_at'] = pd.to_datetime(df_t['created_at']).dt.tz_convert('America/Caracas')
-                st.dataframe(df_t, use_container_width=True, hide_index=True)
+                st.dataframe(
+                    df_t, 
+                    use_container_width=True, 
+                    hide_index=True,
+                    height=500
+                )
             else:
                 st.write("No hay tickets pendientes.")
 
@@ -115,7 +135,12 @@ def main():
         if not df_p.empty:
             if 'created_at' in df_p.columns:
                 df_p['created_at'] = pd.to_datetime(df_p['created_at']).dt.tz_convert('America/Caracas')
-            st.table(df_p)
+            st.dataframe(
+                df_p,
+                use_container_width=True,
+                hide_index=True,
+                height=600
+            )
         else:
             st.info("Sin datos de ventas.")
 
@@ -125,7 +150,12 @@ def main():
         if not df_t.empty:
             if 'created_at' in df_t.columns:
                 df_t['created_at'] = pd.to_datetime(df_t['created_at']).dt.tz_convert('America/Caracas')
-            st.table(df_t)
+            st.dataframe(
+                df_t,
+                use_container_width=True,
+                hide_index=True,
+                height=600
+            )
         else:
             st.info("Sin tickets activos.")
 
