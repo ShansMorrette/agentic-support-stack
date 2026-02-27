@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from app.infrastructure.database import get_db
 from app.application.atencion_service import AtencionService
 from app.domain.models import Client, Ticket
@@ -32,7 +33,8 @@ async def atender_chat(
 
 @router.get("/atencion/prospects", response_model=List[Dict[str, Any]], status_code=status.HTTP_200_OK)
 async def get_prospects(db: AsyncSession = Depends(get_db)) -> List[Dict[str, Any]]:
-    result = await db.execute(select(Ticket).where(Ticket.category == "ventas").order_by(Ticket.created_at.desc()))
+    stmt = select(Ticket).options(selectinload(Ticket.client)).where(Ticket.category == "ventas").order_by(Ticket.created_at.desc())
+    result = await db.execute(stmt)
     tickets = result.scalars().all()
     items: List[Dict[str, Any]] = []
     for t in tickets:
@@ -55,7 +57,7 @@ async def get_tickets(status_param: Optional[str] = None, db: AsyncSession = Dep
         filters.append(Ticket.status == status_param)
     else:
         filters.append(Ticket.status == 'open')
-    stmt = select(Ticket).where(*filters).order_by(Ticket.created_at.desc())
+    stmt = select(Ticket).options(selectinload(Ticket.client)).where(*filters).order_by(Ticket.created_at.desc())
     result = await db.execute(stmt)
     tickets = result.scalars().all()
     items: List[Dict[str, Any]] = []
