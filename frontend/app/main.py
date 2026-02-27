@@ -5,7 +5,7 @@ import pandas as pd
 from datetime import datetime
 
 # Backend base URL
-BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8001")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://app:8001")
 
 def fetch_data(endpoint):
     try:
