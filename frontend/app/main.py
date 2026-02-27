@@ -78,6 +78,11 @@ def main():
     prospects = fetch_data("/api/atencion/prospects")
     tickets = fetch_data("/api/atencion/tickets?status=open")
     
+    # Deduplicación por ID
+    all_raw_data = prospects + tickets
+    dedup_map = {item['id']: item for item in all_raw_data}
+    unified_data = list(dedup_map.values())
+    
     # --- METRICS ---
     m_col1, m_col2, m_col3, m_col4 = st.columns(4)
     with m_col1:
@@ -103,31 +108,53 @@ def main():
 
     st.markdown("---")
 
-    # Pre-processing
-    df_p_orig = pd.DataFrame(prospects)
-    df_t_orig = pd.DataFrame(tickets)
-
-    # Universal TZ Conversion
-    for df in [df_p_orig, df_t_orig]:
-        if not df.empty and 'created_at' in df.columns:
-            df['created_at'] = pd.to_datetime(df['created_at']).dt.tz_convert('America/Caracas')
-
-    # Mapping for tickets
-    if not df_t_orig.empty and 'priority' in df_t_orig.columns:
-        df_t_orig['priority_label'] = df_t_orig['priority'].apply(lambda x: '🔴 Alta' if x >= 4 else '🟡 Media' if x == 3 else '🟢 Baja')
-
-    # Filtering Logic
-    df_p = df_p_orig.copy()
-    df_t = df_t_orig.copy()
+    # Process Data
+    df_unified = pd.DataFrame(unified_data)
     
-    if not df_t.empty:
+    if not df_unified.empty:
+        # TZ Conversion
+        if 'created_at' in df_unified.columns:
+            df_unified['created_at'] = pd.to_datetime(df_unified['created_at']).dt.tz_convert('America/Caracas')
+            
+        # Normalización de Prioridad
+        if 'priority' in df_unified.columns:
+            df_unified['priority_label'] = df_unified['priority'].apply(
+                lambda x: '🔴 Alta' if x >= 4 else '🟡 Media' if x == 3 else '🟢 Baja'
+            )
+        
+        # Normalización de Categoría para filtrado
+        def normalize_cat(row):
+            cat = str(row.get('category', '')).lower()
+            if 'ventas' in cat: return 'Ventas'
+            if 'soporte' in cat or 'técnico' in cat: return 'Soporte Técnico'
+            if 'factura' in cat: return 'Facturación'
+            return 'Otros'
+        
+        df_unified['category_display'] = df_unified.apply(normalize_cat, axis=1)
+        
+        # Normalización de Estado
+        status_map_db = {'open': 'Abierto', 'pending': 'Pendiente', 'closed': 'Cerrado'}
+        df_unified['status_display'] = df_unified['status'].map(status_map_db).fillna(df_unified['status'])
+
+        # FILTRADO SECUENCIAL ESTRICTO
+        df_filtered = df_unified.copy()
+        
         if f_priority != "Todas":
-            df_t = df_t[df_t['priority_label'] == f_priority]
+            df_filtered = df_filtered[df_filtered['priority_label'] == f_priority]
+            
         if f_category != "Todas":
-            df_t = df_t[df_t['category'].str.contains(f_category.split()[-1], case=False, na=False)]
+            df_filtered = df_filtered[df_filtered['category_display'] == f_category]
+            
         if f_status != "Todos":
-            status_map = {"Abierto": "open", "Pendiente": "pending", "Cerrado": "closed"}
-            df_t = df_t[df_t['status'] == status_map.get(f_status, "open")]
+            df_filtered = df_filtered[df_filtered['status_display'] == f_status]
+
+        # Separar para vistas de detalle (pero usando el set filtrado si corresponde)
+        df_p = df_filtered[df_filtered['category_display'] == 'Ventas']
+        df_t = df_filtered[df_filtered['category_display'] != 'Ventas']
+    else:
+        df_filtered = pd.DataFrame()
+        df_p = pd.DataFrame()
+        df_t = pd.DataFrame()
 
     # --- MAIN CONTENT ---
     if menu == "📊 Dashboard General":
@@ -136,61 +163,56 @@ def main():
         # Informativos rápidos
         col_inf1, col_inf2 = st.columns(2)
         with col_inf1:
-            st.info(f"🚀 **Ventas:** {len(df_p)} prospectos")
+            st.info(f"🚀 **Ventas:** {len(df_p)} registros")
         with col_inf2:
-            st.info(f"🛠️ **Soporte:** {len(df_t)} tickets")
+            st.info(f"🛠️ **Soporte:** {len(df_t)} registros")
             
-        # Unificación de datos para la tabla única con previsualización
-        parts = []
-        if not df_p.empty:
-            p_sub = df_p[['created_at', 'cliente', 'summary']].copy()
-            p_sub['Categoría'] = "🚀 Ventas"
-            p_sub['Prioridad'] = "🟢 Baja"
-            parts.append(p_sub)
-        
-        if not df_t.empty:
-            t_sub = df_t[['created_at', 'category', 'priority_label', 'cliente', 'summary']].copy()
-            t_sub = t_sub.rename(columns={'category': 'Categoría', 'priority_label': 'Prioridad'})
-            t_sub['Categoría'] = t_sub['Categoría'].apply(lambda x: f"🛠️ {x}")
-            parts.append(t_sub)
-            
-        if parts:
-            df_resumen = pd.concat(parts).sort_values('created_at', ascending=False)
+        if not df_filtered.empty:
+            # Crear vista de previsualización
+            df_resumen = df_filtered.copy().sort_values('created_at', ascending=False)
             
             # Trimming (truncado) del summary
             df_resumen['Mensaje (Previsualización)'] = df_resumen['summary'].apply(
                 lambda x: (str(x)[:60] + '...') if len(str(x)) > 60 else x
             )
             
+            # Iconos en categoría para la tabla
+            df_resumen['Categoría'] = df_resumen['category_display'].apply(
+                lambda x: f"🚀 {x}" if x == 'Ventas' else f"🛠️ {x}"
+            )
+            
             # Formateo de fecha y nombres legibles
             df_resumen['Fecha'] = df_resumen['created_at'].dt.strftime('%Y-%m-%d %H:%M')
-            df_resumen = df_resumen.rename(columns={'cliente': 'Cliente'})
+            df_resumen = df_resumen.rename(columns={'cliente': 'Cliente', 'priority_label': 'Prioridad'})
             
-            # Reordenar columnas según requerimiento: Fecha, Prioridad, Categoría, Cliente, Mensaje
+            # Reordenar columnas
             df_resumen = df_resumen[['Fecha', 'Prioridad', 'Categoría', 'Cliente', 'Mensaje (Previsualización)']]
             
             st.dataframe(df_resumen, use_container_width=True, hide_index=True, height=500)
         else:
-            st.write("No hay actividad reciente para mostrar.")
+            st.warning("No hay registros que coincidan con los filtros seleccionados.")
 
     elif menu == "🚀 Ventas / Prospects":
         st.subheader("Gestión Detallada de Prospectos")
         if not df_p.empty:
             st.dataframe(df_p, use_container_width=True, hide_index=True, height=600)
         else:
-            st.info("Sin datos de ventas.")
+            st.info("No hay datos de ventas para estos filtros.")
 
     elif menu == "🛠️ Soporte / Tickets":
         st.subheader("Gestión Detallada de Tickets")
         if not df_t.empty:
-            cols = list(df_t.columns)
-            if 'priority_label' in cols:
-                df_t_disp = df_t.drop(columns=['priority']).rename(columns={'priority_label': 'Prioridad'})
-            else:
-                df_t_disp = df_t
+            # Seleccionar columnas relevantes para detalle
+            disp_cols = ['created_at', 'priority_label', 'category', 'cliente', 'status', 'summary']
+            df_t_disp = df_t[disp_cols].rename(columns={
+                'created_at': 'Fecha', 
+                'priority_label': 'Prioridad',
+                'cliente': 'Cliente',
+                'category': 'Categoría Interna'
+            })
             st.dataframe(df_t_disp, use_container_width=True, hide_index=True, height=600)
         else:
-            st.info("Sin tickets activos para los filtros seleccionados.")
+            st.info("No hay tickets de soporte para estos filtros.")
 
     st.markdown("---")
     st.caption("Neural SaaS Platform | WebLanMasters Atención © 2026")
