@@ -90,8 +90,8 @@ def main():
             st.subheader("🚀 Últimos Prospectos")
             if prospects:
                 df_p = pd.DataFrame(prospects)
-                if 'created_at' in df_p.columns:
-                    df_p['created_at'] = pd.to_datetime(df_p['created_at']).dt.tz_convert('America/Caracas')
+            if 'created_at' in df_p.columns:
+                df_p['created_at'] = pd.to_datetime(df_p['created_at']).dt.tz_convert('America/Caracas')
                 st.dataframe(df_p, use_container_width=True, hide_index=True)
             else:
                 st.write("No hay prospectos registrados.")
@@ -111,8 +111,8 @@ def main():
         st.subheader("Gestión de Prospectos de Ventas")
         if prospects:
             df_p = pd.DataFrame(prospects)
-                if 'created_at' in df_p.columns:
-                    df_p['created_at'] = pd.to_datetime(df_p['created_at']).dt.tz_convert('America/Caracas')
+            if 'created_at' in df_p.columns:
+                df_p['created_at'] = pd.to_datetime(df_p['created_at']).dt.tz_convert('America/Caracas')
             st.table(df_p)
         else:
             st.info("Sin datos de ventas.")
@@ -121,6 +121,8 @@ def main():
         st.subheader("Gestión de Tickets de Soporte")
         if tickets:
             df_t = pd.DataFrame(tickets)
+            if 'created_at' in df_t.columns:
+                df_t['created_at'] = pd.to_datetime(df_t['created_at']).dt.tz_convert('America/Caracas')
             st.table(df_t)
         else:
             st.info("Sin tickets activos.")
