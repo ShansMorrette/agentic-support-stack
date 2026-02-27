@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from typing import Dict, Any, Optional
 from openai import AsyncOpenAI
 
@@ -28,14 +29,19 @@ class GeminiClient:
     """Client for interacting with OpenRouter API (OpenAI compatible)."""
 
     def __init__(self, api_key: Optional[str] = None):
-        api_key = api_key or getattr(settings, 'GEMINI_API_KEY', '')
+        # OpenRouter prefers its own API Key pattern
+        api_key = api_key or os.getenv('OPENROUTER_API_KEY') or getattr(settings, 'GEMINI_API_KEY', '')
+        
+        if not api_key:
+            logger.error("ERROR: OPENROUTER_API_KEY no configurada")
+            
         # Base client configuration for OpenRouter
         self.client = AsyncOpenAI(
             api_key=api_key,
             base_url=OPENROUTER_BASE_URL,
             default_headers={
-                "HTTP-Referer": "https://weblanmasters.com",  # Required by OpenRouter
-                "X-Title": "Neural SaaS Platform",           # Required by OpenRouter
+                "HTTP-Referer": "https://weblanmasters.com",  # Requerido por OpenRouter
+                "X-Title": "Neural SaaS Platform",           # Identificador para OpenRouter
             }
         )
         self.model = getattr(settings, 'GEMINI_MODEL', DEFAULT_MODEL)
