@@ -17,3 +17,4 @@ celery==5.3.6
 loguru==0.7.2
 pandas==2.1.4
 pip-system-certs  # Útil en algunos entornos con proxies/VPNs
+streamlit==1.30.0
