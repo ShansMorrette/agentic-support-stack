@@ -12,7 +12,7 @@ sleep 5
 
 # Levantar Streamlit en foreground
 echo "🎨 Levantando Frontend Streamlit en puerto 8502..."
-cd /app && streamlit run frontend/app/main.py --server.port 8502 --server.address 0.0.0.0 --server.headless true
+cd /app && python3 -m streamlit run frontend/app/main.py --server.port 8502 --server.address 0.0.0.0 --server.headless true
 
 # Si Streamlit termina, matar FastAPI también
 kill $(jobs -p)
