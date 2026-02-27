@@ -12,7 +12,8 @@ import logging
 from enum import IntEnum
 from typing import AsyncGenerator, TypedDict
 
-from sqlalchemy import insert, select
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import settings, Environment
