@@ -37,13 +37,11 @@ def main():
         .stButton>button {
             border-radius: 20px;
         }
-        /* Eliminar scroll lateral innecesario */
         .main .block-container {
             max-width: 95%;
             padding-top: 2rem;
             padding-bottom: 2rem;
         }
-        /* Estabilizar tablas */
         .stDataFrame {
             width: 100% !important;
         }
@@ -53,7 +51,7 @@ def main():
         </style>
     """, unsafe_allow_html=True)
 
-    # --- SIDEBAR (Sólo Navegación y Estado) ---
+    # --- SIDEBAR ---
     with st.sidebar:
         st.image("https://cdn-icons-png.flaticon.com/512/2103/2103633.png", width=80)
         st.title("WebLan Masters")
@@ -85,7 +83,7 @@ def main():
     with m_col1:
         st.metric("Total Prospects", len(prospects))
     with m_col2:
-        st.metric("Tickets Abiertos", len(tickets), delta_color="inverse")
+        st.metric("Tickets Abiertos", len(tickets))
     with m_col3:
         st.metric("Calidad Promedio", "88/100", delta="+3%")
     with m_col4:
@@ -96,7 +94,6 @@ def main():
     # --- CENTRAL FILTERS Row ---
     st.markdown("### 🔍 Filtros de Visualización")
     f_col1, f_col2, f_col3 = st.columns(3)
-    
     with f_col1:
         f_priority = st.selectbox("Prioridad", ["Todas", "🔴 Alta", "🟡 Media", "🟢 Baja"])
     with f_col2:
@@ -106,26 +103,27 @@ def main():
 
     st.markdown("---")
 
-    # Pre-processing & Filtering Logic
-    df_p = pd.DataFrame(prospects)
-    df_t = pd.DataFrame(tickets)
+    # Pre-processing
+    df_p_orig = pd.DataFrame(prospects)
+    df_t_orig = pd.DataFrame(tickets)
 
-    # Convert Timezones first
-    if not df_p.empty and 'created_at' in df_p.columns:
-        df_p['created_at'] = pd.to_datetime(df_p['created_at']).dt.tz_convert('America/Caracas')
+    # Universal TZ Conversion
+    for df in [df_p_orig, df_t_orig]:
+        if not df.empty and 'created_at' in df.columns:
+            df['created_at'] = pd.to_datetime(df['created_at']).dt.tz_convert('America/Caracas')
+
+    # Mapping for tickets
+    if not df_t_orig.empty and 'priority' in df_t_orig.columns:
+        df_t_orig['priority_label'] = df_t_orig['priority'].apply(lambda x: '🔴 Alta' if x >= 4 else '🟡 Media' if x == 3 else '🟢 Baja')
+
+    # Filtering Logic (Applied to detail views and summary)
+    df_p = df_p_orig.copy()
+    df_t = df_t_orig.copy()
     
-    if not df_t.empty:
-        if 'created_at' in df_t.columns:
-            df_t['created_at'] = pd.to_datetime(df_t['created_at']).dt.tz_convert('America/Caracas')
-        if 'priority' in df_t.columns:
-            df_t['priority_label'] = df_t['priority'].apply(lambda x: '🔴 Alta' if x >= 4 else '🟡 Media' if x == 3 else '🟢 Baja')
-
-    # Apply Filters
     if not df_t.empty:
         if f_priority != "Todas":
             df_t = df_t[df_t['priority_label'] == f_priority]
         if f_category != "Todas":
-            # Map category logic if needed, here we assume direct match or partial
             df_t = df_t[df_t['category'].str.contains(f_category.split()[-1], case=False, na=False)]
         if f_status != "Todos":
             status_map = {"Abierto": "open", "Pendiente": "pending", "Cerrado": "closed"}
@@ -133,39 +131,56 @@ def main():
 
     # --- MAIN CONTENT ---
     if menu == "📊 Dashboard General":
-        col_left, col_right = st.columns(2)
+        st.subheader("📋 Resumen de Actividad Reciente")
         
-        with col_left:
-            st.subheader("🚀 Últimos Prospectos")
-            if not df_p.empty:
-                st.dataframe(df_p, use_container_width=True, hide_index=True, height=500)
-            else:
-                st.write("No hay prospectos que coincidan.")
-
-        with col_right:
-            st.subheader("🛠️ Tickets de Soporte Pendientes")
-            if not df_t.empty:
-                # Mostrar prioridad mapeada en la tabla
-                cols = list(df_t.columns)
-                if 'priority_label' in cols:
-                    df_t_disp = df_t.drop(columns=['priority']).rename(columns={'priority_label': 'Prioridad'})
-                else:
-                    df_t_disp = df_t
-                st.dataframe(df_t_disp, use_container_width=True, hide_index=True, height=500)
-            else:
-                st.write("No hay tickets que coincidan.")
+        # Informativos rápidos
+        col_inf1, col_inf2 = st.columns(2)
+        with col_inf1:
+            st.info(f"🚀 **Ventas:** {len(df_p)} prospectos")
+        with col_inf2:
+            st.info(f"🛠️ **Soporte:** {len(df_t)} tickets")
+            
+        # Unificación de datos para la tabla única
+        parts = []
+        if not df_p.empty:
+            p_sub = df_p[['created_at']].copy()
+            p_sub['Categoría'] = "🚀 Ventas"
+            p_sub['Prioridad'] = "🟢 Baja"
+            parts.append(p_sub)
+        
+        if not df_t.empty:
+            t_sub = df_t[['created_at', 'category', 'priority_label']].copy()
+            t_sub = t_sub.rename(columns={'category': 'Categoría', 'priority_label': 'Prioridad'})
+            # Asegurar icono en categoría de soporte
+            t_sub['Categoría'] = t_sub['Categoría'].apply(lambda x: f"🛠️ {x}")
+            parts.append(t_sub)
+            
+        if parts:
+            df_resumen = pd.concat(parts).sort_values('created_at', ascending=False)
+            df_resumen['Fecha'] = df_resumen['created_at'].dt.strftime('%Y-%m-%d %H:%M')
+            df_resumen = df_resumen[['Categoría', 'Prioridad', 'Fecha']]
+            
+            st.dataframe(df_resumen, use_container_width=True, hide_index=True, height=500)
+        else:
+            st.write("No hay actividad reciente para mostrar.")
 
     elif menu == "🚀 Ventas / Prospects":
-        st.subheader("Gestión de Prospectos de Ventas")
+        st.subheader("Gestión Detallada de Prospectos")
         if not df_p.empty:
             st.dataframe(df_p, use_container_width=True, hide_index=True, height=600)
         else:
             st.info("Sin datos de ventas.")
 
     elif menu == "🛠️ Soporte / Tickets":
-        st.subheader("Gestión de Tickets de Soporte")
+        st.subheader("Gestión Detallada de Tickets")
         if not df_t.empty:
-            st.dataframe(df_t, use_container_width=True, hide_index=True, height=600)
+            # Map labels for display
+            cols = list(df_t.columns)
+            if 'priority_label' in cols:
+                df_t_disp = df_t.drop(columns=['priority']).rename(columns={'priority_label': 'Prioridad'})
+            else:
+                df_t_disp = df_t
+            st.dataframe(df_t_disp, use_container_width=True, hide_index=True, height=600)
         else:
             st.info("Sin tickets activos para los filtros seleccionados.")
 
