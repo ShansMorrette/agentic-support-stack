@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Constants
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-DEFAULT_MODEL = "google/gemini-flash-1.5"
+DEFAULT_MODEL = "arcee-ai/trinity-large-preview:free"
 
 # System prompt to enforce JSON output for classification
 CLASSIFICATION_SYSTEM_PROMPT = (
@@ -44,7 +44,7 @@ class GeminiClient:
                 "X-Title": "Neural SaaS Platform",           # Identificador para OpenRouter
             }
         )
-        self.model = getattr(settings, 'GEMINI_MODEL', DEFAULT_MODEL)
+        self.model = os.getenv('OPENROUTER_MODEL') or DEFAULT_MODEL
 
     async def analyze_code(self, code: str, model: Optional[str] = None) -> str:
         """Analyzes Python code for bugs and improvements."""
