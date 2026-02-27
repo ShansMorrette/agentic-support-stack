@@ -241,7 +241,7 @@ with col_left:
     if len(historial) > 0:
         # Crear DataFrame con el historial del backend
         df = pd.DataFrame(historial)
-        df['created_at'] = pd.to_datetime(df['created_at'])
+        df['created_at'] = pd.to_datetime(df['created_at']).dt.tz_convert('America/Caracas')
         
         # Gráfico de línea de scores
         if 'quality_score' in df.columns and df['quality_score'].notna().any():
@@ -268,7 +268,7 @@ with col_left:
         tabla_data = []
         for h in historial:
             tabla_data.append({
-                "Fecha": pd.to_datetime(h['created_at']).strftime('%Y-%m-%d %H:%M'),
+                "Fecha": pd.to_datetime(h['created_at']).tz_convert('America/Caracas').strftime('%Y-%m-%d %H:%M'),
                 "Código": h.get('code_preview', 'N/A'),
                 "Score": h.get('quality_score', '-') or '-',
                 "Modelo": h.get('model_used', 'N/A')
