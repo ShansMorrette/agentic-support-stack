@@ -116,7 +116,7 @@ def main():
     if not df_t_orig.empty and 'priority' in df_t_orig.columns:
         df_t_orig['priority_label'] = df_t_orig['priority'].apply(lambda x: '🔴 Alta' if x >= 4 else '🟡 Media' if x == 3 else '🟢 Baja')
 
-    # Filtering Logic (Applied to detail views and summary)
+    # Filtering Logic
     df_p = df_p_orig.copy()
     df_t = df_t_orig.copy()
     
@@ -140,25 +140,34 @@ def main():
         with col_inf2:
             st.info(f"🛠️ **Soporte:** {len(df_t)} tickets")
             
-        # Unificación de datos para la tabla única
+        # Unificación de datos para la tabla única con previsualización
         parts = []
         if not df_p.empty:
-            p_sub = df_p[['created_at']].copy()
+            p_sub = df_p[['created_at', 'cliente', 'summary']].copy()
             p_sub['Categoría'] = "🚀 Ventas"
             p_sub['Prioridad'] = "🟢 Baja"
             parts.append(p_sub)
         
         if not df_t.empty:
-            t_sub = df_t[['created_at', 'category', 'priority_label']].copy()
+            t_sub = df_t[['created_at', 'category', 'priority_label', 'cliente', 'summary']].copy()
             t_sub = t_sub.rename(columns={'category': 'Categoría', 'priority_label': 'Prioridad'})
-            # Asegurar icono en categoría de soporte
             t_sub['Categoría'] = t_sub['Categoría'].apply(lambda x: f"🛠️ {x}")
             parts.append(t_sub)
             
         if parts:
             df_resumen = pd.concat(parts).sort_values('created_at', ascending=False)
+            
+            # Trimming (truncado) del summary
+            df_resumen['Mensaje (Previsualización)'] = df_resumen['summary'].apply(
+                lambda x: (str(x)[:60] + '...') if len(str(x)) > 60 else x
+            )
+            
+            # Formateo de fecha y nombres legibles
             df_resumen['Fecha'] = df_resumen['created_at'].dt.strftime('%Y-%m-%d %H:%M')
-            df_resumen = df_resumen[['Categoría', 'Prioridad', 'Fecha']]
+            df_resumen = df_resumen.rename(columns={'cliente': 'Cliente'})
+            
+            # Reordenar columnas según requerimiento: Fecha, Prioridad, Categoría, Cliente, Mensaje
+            df_resumen = df_resumen[['Fecha', 'Prioridad', 'Categoría', 'Cliente', 'Mensaje (Previsualización)']]
             
             st.dataframe(df_resumen, use_container_width=True, hide_index=True, height=500)
         else:
@@ -174,7 +183,6 @@ def main():
     elif menu == "🛠️ Soporte / Tickets":
         st.subheader("Gestión Detallada de Tickets")
         if not df_t.empty:
-            # Map labels for display
             cols = list(df_t.columns)
             if 'priority_label' in cols:
                 df_t_disp = df_t.drop(columns=['priority']).rename(columns={'priority_label': 'Prioridad'})
