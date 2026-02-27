@@ -1,4 +1,3 @@
-
 services:
   # PostgreSQL con pgvector
   db:
@@ -8,10 +7,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+      TZ: America/Caracas
     ports:
       - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - saas_network
     healthcheck:
@@ -36,25 +37,52 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # Aplicación Unificada (Backend FastAPI + Frontend Streamlit)
+  # Backend FastAPI
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: neural_saas_app
+    container_name: neural_saas_backend
+    command: /bin/bash -c "cd /app/backend && uvicorn app.main:app --host 0.0.0.0 --port 8001"
     env_file:
       - .env
+    environment:
+      - TZ=America/Caracas
     ports:
       - "8001:8001"
-      - "8502:8502"
     volumes:
       - .:/app:cached
-      - /app/.venv  # Excluir venv del volumen montado
+      - /app/.venv
+      - /etc/localtime:/etc/localtime:ro
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - saas_network
+    restart: unless-stopped
+
+  # Frontend Streamlit
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: neural_saas_frontend
+    command: /bin/bash -c "cd /app && python3 -m streamlit run frontend/app/main.py --server.port 8502 --server.address 0.0.0.0 --server.headless true"
+    env_file:
+      - .env
+    environment:
+      - TZ=America/Caracas
+    ports:
+      - "8502:8502"
+    volumes:
+      - .:/app:cached
+      - /app/.venv
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      app:
+        condition: service_started
     networks:
       - saas_network
     restart: unless-stopped
